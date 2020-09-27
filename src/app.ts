@@ -67,10 +67,45 @@ async function execOnAuthStateChanged(): Promise<void> {
   const result = await exec(async () => {
     await new Promise((resolve) => {
       firebase.auth().onAuthStateChanged(() => {
-        // console.log(user);
         resolve();
       });
     });
+  });
+  console.log(pretty(result));
+}
+async function execGetIdToken(): Promise<void> {
+  const credential = await firebase.auth().signInAnonymously();
+
+  const result = await exec(async () => {
+    await credential.user?.getIdToken();
+  });
+  console.log(pretty(result));
+}
+
+async function execVerifyIdTokenWithCheckRevoked(): Promise<void> {
+  const credential = await firebase.auth().signInAnonymously();
+
+  const idToken = await credential.user?.getIdToken();
+
+  const result = await exec(async () => {
+    if (!idToken) {
+      throw new Error();
+    }
+    await admin.auth().verifyIdToken(idToken, true);
+  });
+  console.log(pretty(result));
+}
+
+async function execVerifyIdTokenWithoutCheckRevoked(): Promise<void> {
+  const credential = await firebase.auth().signInAnonymously();
+
+  const idToken = await credential.user?.getIdToken();
+
+  const result = await exec(async () => {
+    if (!idToken) {
+      throw new Error();
+    }
+    await admin.auth().verifyIdToken(idToken, false);
   });
   console.log(pretty(result));
 }
@@ -79,6 +114,9 @@ async function main(): Promise<void> {
   await execCreateUser();
   await execGetUser();
   await execOnAuthStateChanged();
+  await execGetIdToken();
+  await execVerifyIdTokenWithCheckRevoked();
+  await execVerifyIdTokenWithoutCheckRevoked();
 }
 
 main();
